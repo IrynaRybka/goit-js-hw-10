@@ -1,29 +1,50 @@
 import './css/styles.css';
+import debounce from 'lodash.debounce';
 import Notiflix from 'notiflix';
-import cardCountry from '../src/template/card-country.hbs';
+import fetchCountries from './fetchCountries';
 
 const DEBOUNCE_DELAY = 300;
 const inputRef = document.querySelector('#search-box');
-const cardInfo = document.querySelector('.country-info');
+const cardCountry = document.querySelector('.country-info');
+const listCountry = document.querySelector('.country-list');
 
 inputRef.addEventListener('input', debounce(writeCountry, DEBOUNCE_DELAY));
 
-function writeCountry(event) {
-  console.log(event.target.value);
-  
+function writeCountry(ev) {
+  const searchInput = ev.target.value.trim();
+  fetchCountries(searchInput)
+    .then(markupCountry)
+    .catch(error => console.log(error));
 }
 
-// function fetchCountries(name) {
+//===================== MARKUP ==================================
+// add markup of coutry
+function markupCountry(country) {
+  return cardCountry.insertAdjacentHTML(
+    'beforeend',
+    country
+      .map(({ name, flags, capital, population, languages }) => {
+        return `<h2 class="country">Country: ${name.official}</h2>
+ <img class="flag" src="${flags.svg}" alt="Flag" width="100">
+ <ul>
+   <li class="capital">Capital of ${name.official} is ${capital}</li>
+   <li class="population">Population: ${population}</li>
+   <li class="language">Language/s is/are ${Object.values(languages).join(
+     ', '
+   )}</li>
+ </ul>`;
+      })
+      .join('')
+  );
+}
 
-fetch(`https://restcountries.com/v2/name/${name}?fields=name,capital,population,flags,languages`)
-  .then(responce => {
-   return responce.json()
-  }).then(country => {
-    console.log(country)
-     
-    cardInfo.insertAdjacentHTML("beforeend", cardCountry);
-    }
-)
-  .catch(error => {console.log(error)});
-// }
-
+// add markup search list
+function markupListSearch(countriesList) {
+  return listCountry.insertAdjacentHTML(
+    'beforeend', countriesList
+    .map(({ name, flags }) => {
+      return `<img class="flag-list" src="${flags.svg}" alt="Flag">
+    <p class="country-list">${name.official}</p>`;
+    })
+    .join('')
+)}
